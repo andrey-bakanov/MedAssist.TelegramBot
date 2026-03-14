@@ -133,7 +133,7 @@
     <value>Хронические заболевания</value>
   </data>
   <data name="ClientProfileHelp" xml:space="preserve">
-    <value>Полную карточку пациента вы можете заполнить в mini app.</value>
+    <value>Полную карточку пациента вы можете заполнить в mini app {0}.</value>
   </data>
   <data name="Create" xml:space="preserve">
     <value>Создать</value>
@@ -149,6 +149,9 @@
   </data>
   <data name="DeleteUserWarning" xml:space="preserve">
     <value>Удаление регистрации приведет к полному удалению данных.</value>
+  </data>
+  <data name="GoLink" xml:space="preserve">
+    <value>Перейти</value>
   </data>
   <data name="Help" xml:space="preserve">
     <value>Помощь</value>

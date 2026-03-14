@@ -106,7 +106,7 @@ namespace MedAssist.TelegramBot.Worker.Resources {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на Полную карточку пациента вы можете заполнить в mini app..
+        ///   Ищет локализованную строку, похожую на Полную карточку пациента вы можете заполнить в mini app {0}..
         /// </summary>
         internal static string ClientProfileHelp {
             get {
@@ -156,6 +156,15 @@ namespace MedAssist.TelegramBot.Worker.Resources {
         internal static string DeleteUserWarning {
             get {
                 return ResourceManager.GetString("DeleteUserWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на Перейти.
+        /// </summary>
+        internal static string GoLink {
+            get {
+                return ResourceManager.GetString("GoLink", resourceCulture);
             }
         }
         
