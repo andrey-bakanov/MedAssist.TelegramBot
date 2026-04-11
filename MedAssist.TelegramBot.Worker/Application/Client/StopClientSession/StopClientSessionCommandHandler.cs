@@ -1,19 +1,18 @@
-﻿using MedAssist.TelegramBot.Worker.Application.Bot.StopDialog;
-using MedAssist.TelegramBot.Worker.Services;
+﻿using MedAssist.TelegramBot.Worker.Services;
 using MedAssist.TelegramBot.Worker.Services.State;
 using Mediator;
 using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace MedAssist.TelegramBot.Worker.Application.Bot.DialogMessage;
+namespace MedAssist.TelegramBot.Worker.Application.Client.StopClientSession;
 
-public class StopDialogCommandHandler : ICommandHandler<StopDialogCommand>
+public class StopClientSessionCommandHandler : ICommandHandler<StopClientSessionCommand>
 {
     private readonly ITelegramBotClient _telegramClient;
     private readonly UserStateService _userStateService;
     private readonly IDataService _dataService;
 
-    public StopDialogCommandHandler(
+    public StopClientSessionCommandHandler(
         ITelegramBotClient telegramClient, 
         UserStateService userStateService,
         IDataService dataService)
@@ -23,11 +22,16 @@ public class StopDialogCommandHandler : ICommandHandler<StopDialogCommand>
         _dataService = dataService;
     }
 
-    public async ValueTask<Unit> Handle(StopDialogCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Unit> Handle(StopClientSessionCommand command, CancellationToken cancellationToken)
     {
-        await _dataService.ClearClientSessionAsync(command.UserId);
+        var userState = _userStateService.GetState(command.UserId);
 
-        _userStateService.UpdateConversationIdState(command.UserId, null);
+        if (userState?.ClientName != null)
+        {
+            Guid clientId = Guid.Parse(userState.ClientName.Id);
+            await _dataService.CompleteClientDialog(command.UserId, clientId);
+        }
+
         _userStateService.UpdateClientSession(command.UserId, null);
         
         await _telegramClient.SendMessage(

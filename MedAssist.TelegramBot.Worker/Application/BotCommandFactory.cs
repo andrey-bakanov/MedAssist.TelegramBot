@@ -1,14 +1,13 @@
 ﻿using MedAssist.TelegramBot.Worker.Application.Bot.DialogMessage;
 using MedAssist.TelegramBot.Worker.Application.Bot.Help;
 using MedAssist.TelegramBot.Worker.Application.Bot.Start;
-using MedAssist.TelegramBot.Worker.Application.Bot.StartDialog;
-using MedAssist.TelegramBot.Worker.Application.Bot.StopDialog;
 using MedAssist.TelegramBot.Worker.Application.Bot.Unknown;
 using MedAssist.TelegramBot.Worker.Application.Client.CreateClient;
 using MedAssist.TelegramBot.Worker.Application.Client.DeleteClient;
 using MedAssist.TelegramBot.Worker.Application.Client.ListClients;
 using MedAssist.TelegramBot.Worker.Application.Client.SelectClient;
 using MedAssist.TelegramBot.Worker.Application.Client.StartClientSession;
+using MedAssist.TelegramBot.Worker.Application.Client.StopClientSession;
 using MedAssist.TelegramBot.Worker.Application.User.Me;
 using MedAssist.TelegramBot.Worker.Application.User.Register;
 using MedAssist.TelegramBot.Worker.Application.User.SetSpeciality;
@@ -106,14 +105,9 @@ public class BotCommandFactory
             return new CreateClientCommand(update, arguments);
         }
 
-        if (commandName == BotCommandNames.StopDialogCommandName)
+        if (commandName == BotCommandNames.StopClientSessionCommandName)
         {
-            return new StopDialogCommand(update, []);
-        }
-
-        if (commandName == BotCommandNames.StartNewDialogCommandName)
-        {
-            return new StartDialogCommand(update, []);
+            return new StopClientSessionCommand(update, []);
         }
 
         return new UnknownCommand(update);

@@ -23,6 +23,9 @@ public interface IMedAssistApiClient
     [Get("/v1/me")]
     Task<Refit.ApiResponse<UserProfile>> GetProfile([Header("X-Telegram-User-Id")] long userId);
 
+    [Get("/v1/me/chat/last-patient")]
+    Task<PatientDialogDto> GetLastDialogPatient([Header("X-Telegram-User-Id")] long userId);
+
     [Get("/v1/patients")]
     Task<IEnumerable<Client>> GetClients([Header("X-Telegram-User-Id")] long userId);
 
@@ -35,12 +38,18 @@ public interface IMedAssistApiClient
     [Delete("/v1/patients/{clientId}")]
     Task<Refit.ApiResponse<Client>> DeleteClient([Header("X-Telegram-User-Id")] long userId, Guid clientId);
 
-    [Put("/v1/me/active-patient")]
-    Task SetupClientSession([Header("X-Telegram-User-Id")] long userId, [Body] SetClientSessionRequest request);
+    [Post("/v1/bot/chat/general/ask")]
+    Task<ApiResponse<ChatMessageDto>> SendGeneralMessage([Header("X-Telegram-User-Id")] long userId, [Body] ChatMessageRequest request);
 
-    [Delete("/v1/me/active-patient")]
-    Task ClearClientSession([Header("X-Telegram-User-Id")] long userId);
+    [Post("/v1/patients/{clientId}/chat/current/complete")]
+    Task CompleteDialog([Header("X-Telegram-User-Id")] long userId, Guid clientId);
 
-    [Post("/v1/bot/chat/ask")]
-    Task<Refit.ApiResponse<ChatMessageDto>> SendMessage([Header("X-Telegram-User-Id")] long userId, [Body] ChatMessageRequest request);
+    [Post("/v1/patients/{clientId}/chat/current/ask")]
+    Task<ApiResponse<ChatMessageDto>> SendClientDialogMessage([Header("X-Telegram-User-Id")] long userId, Guid clientId, [Body] ChatMessageRequest request);
+
+    [Post("/v1/patients/{clientId}/chat/conversations")]
+    Task<StartNewDialogDto> StartClientDialog([Header("X-Telegram-User-Id")] long userId, Guid clientId);
+
+    [Post("/v1/patients/{clientId}/chat/current/complete")]
+    Task CompleteClientDialog([Header("X-Telegram-User-Id")] long userId, Guid clientId);
 }

@@ -9,7 +9,7 @@ public class DialogDenideException : Exception
 
     }
 
-    public DialogDenideException(string message) : base()
+    public DialogDenideException(string message) : base(message)
     {
 
     }

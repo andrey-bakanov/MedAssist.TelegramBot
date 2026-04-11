@@ -148,6 +148,12 @@ public class DataService : IDataService
         return result;
     }
 
+    public async Task<PatientDialogDto?> GetClientDialogInfoAsync(long userId)
+    {
+        var response = await _client.GetLastDialogPatient(userId);
+        return response;
+    }
+
     public async Task<IEnumerable<Client>> GetClientsAsync(long userId)
     {
         string cacheKey = "clients_" + userId;
@@ -189,37 +195,15 @@ public class DataService : IDataService
         _memoryCache.Remove(cacheKey);
     }
 
-    public async Task SetupClientSessionAsync(long userId, Guid clientId)
-    {
-        var request = new SetClientSessionRequest
-        {
-            PatientId = clientId
-        };
-
-        await _client.SetupClientSession(userId, request);
-
-        string cacheKey = "profile_" + userId;
-        _memoryCache.Remove(cacheKey);
-    }
-
-    public async Task ClearClientSessionAsync(long userId)
-    {
-        await _client.ClearClientSession(userId);
-
-        string cacheKey = "profile_" + userId;
-        _memoryCache.Remove(cacheKey);
-    }
-
-    public async Task<ChatMessageDto> SendChatMessage(long userId, string text, Guid requestId, Guid? conversationId = null)
+    public async Task<ChatMessageDto> SendChatMessage(long userId, string text)
     {
         ChatMessageRequest request = new ChatMessageRequest()
         {
             Text = text,
-            RequestId = requestId,
-            ConversationId = conversationId
+            RequestId = Guid.NewGuid(),
         };
 
-        var response = await _client.SendMessage(userId, request);
+        var response = await _client.SendGeneralMessage(userId, request);
 
         if(response.IsSuccessStatusCode)
         {
@@ -231,6 +215,39 @@ public class DataService : IDataService
             throw new DialogDenideException(ResourceMain.PaymentRequired);
         }
 
-        throw new DialogDenideException();
+        throw new DialogDenideException(response.Error?.Message ?? string.Empty);
+    }
+
+    public async Task<ChatMessageDto> SendClientChatMessage(long userId, string text, Guid clientId)
+    {
+        ChatMessageRequest request = new ChatMessageRequest()
+        {
+            Text = text,
+            RequestId = Guid.NewGuid(),
+        };
+
+        var response = await _client.SendClientDialogMessage(userId, clientId, request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return response.Content!;
+        }
+
+        if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
+        {
+            throw new DialogDenideException(ResourceMain.PaymentRequired);
+        }
+
+        throw new DialogDenideException(response.Error?.Message ?? String.Empty);
+    }
+
+    public Task<StartNewDialogDto> StartClientDialog(long userId, Guid clientId)
+    {
+        return _client.StartClientDialog(userId, clientId);
+    }
+
+    public Task CompleteClientDialog(long userId, Guid clientId)
+    {
+        return _client.CompleteClientDialog(userId, clientId);
     }
 }

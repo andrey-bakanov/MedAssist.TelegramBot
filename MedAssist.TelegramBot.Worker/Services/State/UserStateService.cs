@@ -1,6 +1,5 @@
 ﻿using MedAssist.TelegramBot.Worker.Models;
 using System.Collections.Concurrent;
-using Telegram.Bot.Types;
 
 namespace MedAssist.TelegramBot.Worker.Services.State;
 
@@ -34,8 +33,7 @@ public class UserStateService
             IsRegistered = isRegistered,
             LastCommandName = oldState?.LastCommandName,
             AwaitingReplyMessageId = oldState?.AwaitingReplyMessageId,
-            ClientName = oldState?.ClientName,
-            ConversationId = oldState?.ConversationId
+            ClientName = oldState?.ClientName
         };
 
         return States.AddOrUpdate(userId, newState, (userId, stateOld) => newState);
@@ -68,11 +66,11 @@ public class UserStateService
         return state;
     }
 
-    public UserState UpdateConversationIdState(long userId, Guid? conversationId)
+    public UserState UpdateLastLlmResponseSession(long userId, string response)
     {
         UserState? state = GetState(userId);
 
-        state.ConversationId = conversationId;
+        state.LastLLMResponse = response;
 
         return state;
     }

@@ -24,13 +24,14 @@ public class UserState
     /// </summary>
     public string? LastCommandName { get; set; }
 
+
+    /// <summary>
+    /// Последня команда
+    /// </summary>
+    public string LastLLMResponse { get; set; }
+
     /// <summary>
     /// Контекст пациента
     /// </summary>
     public NamedItem? ClientName { get; set; }
-
-    /// <summary>
-    /// Идентификатор текущего диалога
-    /// </summary>
-    public Guid? ConversationId { get; set; }
 }

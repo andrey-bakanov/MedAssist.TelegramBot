@@ -67,16 +67,17 @@ public class TelegramWorker : BackgroundService
             var state = await _userStateService.EnsureState(command.UserId, command.ChatId, async userId =>
             {
                 var userInfo = await _dataService.GetUserInfoAsync(userId);
-
                 var isRegistered = (userInfo != null) ? true : false;
 
+                var lastSessionInfo = await _dataService.GetClientDialogInfoAsync(userId);
+
                 NamedItem? clientNameItem = null;
-                if (userInfo != null && userInfo.LastSelectedPatientId != null)
+                if (lastSessionInfo != null && lastSessionInfo.PatientId != Guid.Empty)
                 {
                     clientNameItem = new NamedItem()
                     {
-                        Id = userInfo.LastSelectedPatientId.ToString()!,
-                        Name = userInfo.LastSelectedPatientNickname!
+                        Id = lastSessionInfo.PatientId.ToString()!,
+                        Name = lastSessionInfo.Nickname!
                     };
                 }
 

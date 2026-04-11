@@ -2,7 +2,7 @@
 
 public static class StringExtensions
 {
-    private static readonly string[] MarkDownSpecialChars = { "\\", "`", "*", "_", "{", "}", "[", "]", "(", ")", "#", "+", "-", ".", "!" };
+    private static readonly string[] MarkDownSpecialChars = { "\\", "|", "~", "`", "*", "_", "{", "}", "[", "]", "(", ")", "#", "+", "-", ".", "!" };
     public static string EscapeMarkdownSpecialCharacters(this string text)
     {
         if (string.IsNullOrEmpty(text))

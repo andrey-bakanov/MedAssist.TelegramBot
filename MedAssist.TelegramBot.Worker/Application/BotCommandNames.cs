@@ -22,11 +22,9 @@ internal static class BotCommandNames
 
     public static readonly string SelectClientInfoCommandName = "/client";
 
-    public static readonly string StartClientSessionCommandName = "/setclient";
+    public static readonly string StartClientSessionCommandName = "/startclient";
 
-    public static readonly string StartNewDialogCommandName = $"{TelegramMessageIcons.Point}Новый";
-
-    public static readonly string StopDialogCommandName = $"{TelegramMessageIcons.Done}Завершить";
+    public static readonly string StopClientSessionCommandName = $"{TelegramMessageIcons.Done}Завершить";
 
     public static bool IsCommand(string commandName)
     {
@@ -41,7 +39,6 @@ internal static class BotCommandNames
             return true;
         }
 
-        return commandName!.StartsWith(StartNewDialogCommandName) ||
-            commandName!.StartsWith(StopDialogCommandName);
+        return commandName!.StartsWith(StopClientSessionCommandName);
     }
 }

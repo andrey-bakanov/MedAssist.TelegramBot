@@ -56,6 +56,13 @@ public interface IDataService
     Task<UserProfile?> GetUserInfoAsync(long userId);
 
     /// <summary>
+    /// Асинхронно получает информацию о последнем незавершенном диалоге пользователя.
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя в Telegram.</param>
+    /// <returns>Профиль пользователя или null, если не найден.</returns>
+    Task<PatientDialogDto?> GetClientDialogInfoAsync(long userId);
+
+    /// <summary>
     /// Асинхронно получает список клиентов пользователя.
     /// </summary>
     /// <param name="userId">Идентификатор пользователя в Telegram.</param>
@@ -87,27 +94,35 @@ public interface IDataService
     Task CreateClientInfoAsync(long userId, string clientName);
 
     /// <summary>
-    /// Асинхронно устанавливает сессию клиента.
+    /// Асинхронно отправляет сообщение чата.
     /// </summary>
     /// <param name="userId">Идентификатор пользователя в Telegram.</param>
-    /// <param name="clientId">Уникальный идентификатор клиента.</param>
+    /// <param name="text">Сообщение пользователя.</param>
     /// <returns>Задача, представляющая асинхронную операцию.</returns>
-    Task SetupClientSessionAsync(long userId, Guid clientId);
-
-    /// <summary>
-    /// Асинхронно очищает сессию клиента.
-    /// </summary>
-    /// <param name="userId">Идентификатор пользователя в Telegram.</param>
-    /// <returns>Задача, представляющая асинхронную операцию.</returns>
-    Task ClearClientSessionAsync(long userId);
+    Task<ChatMessageDto> SendChatMessage(long userId, string text);
 
     /// <summary>
     /// Асинхронно отправляет сообщение чата.
     /// </summary>
     /// <param name="userId">Идентификатор пользователя в Telegram.</param>
     /// <param name="text">Сообщение пользователя.</param>
-    /// <param name="requestId">Идентификатор запроса</param>
-    /// <param name="conversationId">Идентификатор диалога</param>
+    /// <param name="clientId">Идентификатор запроса</param>
     /// <returns>Задача, представляющая асинхронную операцию.</returns>
-    Task<ChatMessageDto> SendChatMessage(long userId, string text, Guid requestId, Guid? conversationId = null);
+    Task<ChatMessageDto> SendClientChatMessage(long userId, string text, Guid clientId);
+
+    /// <summary>
+    /// Начинает новый диалог с пользователем
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя в Telegram.</param>
+    /// <param name="clientId">Идентификатор пациента</param>
+    /// <returns></returns>
+    Task<StartNewDialogDto> StartClientDialog(long userId, Guid clientId);
+
+    /// <summary>
+    /// Завершить диалог
+    /// </summary>
+    /// <param name="userId">Идентификатор пользователя в Telegram.</param>
+    /// <param name="clientId">Идентификатор пациента</param>
+    /// <returns></returns>
+    Task CompleteClientDialog(long userId, Guid clientId);
 }

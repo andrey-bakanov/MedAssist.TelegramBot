@@ -1,3 +1,4 @@
+using dotenv.net;
 using MedAssist.TelegramBot.Worker;
 using MedAssist.TelegramBot.Worker.Configuration;
 using MedAssist.TelegramBot.Worker.Extensions.DependencyInjection;
@@ -11,7 +12,17 @@ using Microsoft.Extensions.Options;
 using Refit;
 using Telegram.Bot;
 
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+Console.InputEncoding = System.Text.Encoding.UTF8;
+
 var builder = Host.CreateApplicationBuilder(args);
+
+if (builder.Environment.IsDevelopment())
+{
+    DotEnvOptions options = new DotEnvOptions(
+        overwriteExistingVars: true);
+    DotEnv.Load(options);
+}
 
 builder.Services.AddHttpClient();
 
