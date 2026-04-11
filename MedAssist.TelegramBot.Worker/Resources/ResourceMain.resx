@@ -186,6 +186,9 @@
   <data name="Patient_ResetSession" xml:space="preserve">
     <value>Сбросить сессию</value>
   </data>
+  <data name="Patient_Restored" xml:space="preserve">
+    <value>Последний чат пациента восстановлен. Пациент: {0}.</value>
+  </data>
   <data name="Patient_SessionCompleted" xml:space="preserve">
     <value>Сессия клиента завершена.</value>
   </data>

@@ -37,7 +37,7 @@ public class ListClientsCommandCommandHandler : ICommandHandler<ListClientsComma
 
         if(userState!.ClientName != null)
         {
-            inlineKeyboard.AddNewRow(new InlineKeyboardButton(Resources.ResourceMain.Patient_ResetSession, $"{BotCommandNames.StartClientSessionCommandName}"));
+            inlineKeyboard.AddNewRow(new InlineKeyboardButton(Resources.ResourceMain.Patient_ResetSession, $"{BotCommandNames.StopClientSessionCommandName}"));
         }
 
         await _telegramClient.SendMessage(command.ChatId,

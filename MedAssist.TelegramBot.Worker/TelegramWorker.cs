@@ -8,6 +8,7 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MedAssist.TelegramBot.Worker;
 
@@ -64,6 +65,7 @@ public class TelegramWorker : BackgroundService
         {
             _logger.LogInformation($"Received message from chat {command.ChatId}: \"{command.Text}\" {command.Username} {command.UserId}");
 
+            bool isRestored = false;
             var state = await _userStateService.EnsureState(command.UserId, command.ChatId, async userId =>
             {
                 var userInfo = await _dataService.GetUserInfoAsync(userId);
@@ -92,11 +94,28 @@ public class TelegramWorker : BackgroundService
                     } 
                 };
 
+                isRestored = true;
                 return state;
             });
 
             try
             {
+                if (isRestored && state.ClientName != null)
+                {
+                    KeyboardButton[] keyboardButtons = [new KeyboardButton($"{BotCommandNames.StopClientSessionCommandName} [{state.ClientName.Name}]")];
+                    ReplyKeyboardMarkup? keyboardMarkup = new ReplyKeyboardMarkup(keyboardButtons)
+                    {
+                        ResizeKeyboard = true,
+                        OneTimeKeyboard = true,
+                        IsPersistent = true
+                    };
+
+                    await _botClient.SendMessage(
+                        command.ChatId,
+                        string.Format(Resources.ResourceMain.Patient_Restored, state.ClientName.Name),
+                        replyMarkup: keyboardMarkup,
+                        cancellationToken: cancellationToken);
+                }
                 await _mediator.Send(command, cancellationToken);
 
                 _userStateService.UpdateLastCommand(command.UserId, command.Name);

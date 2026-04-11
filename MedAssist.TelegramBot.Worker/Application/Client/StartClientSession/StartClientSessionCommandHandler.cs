@@ -38,6 +38,11 @@ public class StartClientSessionCommandHandler : ICommandHandler<StartClientSessi
             return Unit.Value;
         }
 
+        if (userState?.ClientName != null)
+        {
+            await _dataService.CompleteClientDialog(command.UserId, Guid.Parse(userState.ClientName.Id));
+        }
+
         var _ = await _dataService.StartClientDialog(command.UserId, new Guid(clientId));
 
         var clientInfo = await _dataService.GetClientInfoAsync(command.UserId, new Guid(clientId));
