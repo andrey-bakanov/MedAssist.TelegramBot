@@ -51,7 +51,7 @@ public class StartCommandHandler : ICommandHandler<StartCommand>
         };
 
         var miniAppUrl = String.Format(_miniAppOptions.Value.Url, DateTimeOffset.Now.Ticks.ToString());
-        inlineKeyboard.AddNewRow([InlineKeyboardButton.WithCallbackData(ResourceMain.Help, BotCommandNames.HelpCommandName)]);
+        //inlineKeyboard.AddNewRow([InlineKeyboardButton.WithCallbackData(ResourceMain.Help, BotCommandNames.HelpCommandName)]);
         inlineKeyboard.AddNewRow([InlineKeyboardButton.WithWebApp(ResourceMain.OpenMiniApp, new WebAppInfo { Url = miniAppUrl })]);
 
         return inlineKeyboard;

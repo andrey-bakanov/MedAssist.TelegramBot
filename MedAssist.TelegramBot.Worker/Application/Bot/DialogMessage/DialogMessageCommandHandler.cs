@@ -1,12 +1,10 @@
-﻿using System.Text.RegularExpressions;
-using MedAssist.TelegramBot.Worker.Extensions;
-using MedAssist.TelegramBot.Worker.Helpers;
+using MedAssist.TelegramBot.Worker.Application.Bot.DialogMessage.Handlers;
+using MedAssist.TelegramBot.Worker.Application.Bot.DialogMessage.Processing;
 using MedAssist.TelegramBot.Worker.Resources;
 using MedAssist.TelegramBot.Worker.Services;
-using MedAssist.TelegramBot.Worker.Services.Api;
 using MedAssist.TelegramBot.Worker.Services.State;
+using MedAssist.TelegramBot.Worker.Extensions;
 using Mediator;
-using Refit;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -18,61 +16,70 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
     private readonly ITelegramBotClient _telegramClient;
     private readonly UserStateService _userStateService;
     private readonly IDataService _dataService;
-    private readonly IAsrApiClient _asrApiClient;
+    private readonly IEnumerable<IMessageContentHandler> _contentHandlers;
+    private readonly LlmResponseProcessor _llmResponseProcessor;
     private readonly ILogger<DialogMessageCommandHandler> _logger;
 
     private const int ChatTypingActionIntervalMilliseconds = 7_000;
 
     public DialogMessageCommandHandler(
-        ITelegramBotClient telegramClient, 
+        ITelegramBotClient telegramClient,
         UserStateService userStateService,
         IDataService dataService,
-        IAsrApiClient asrApiClient,
+        IEnumerable<IMessageContentHandler> contentHandlers,
+        LlmResponseProcessor llmResponseProcessor,
         ILogger<DialogMessageCommandHandler> logger)
     {
         _telegramClient = telegramClient;
         _userStateService = userStateService;
         _dataService = dataService;
-        _asrApiClient = asrApiClient;
+        _contentHandlers = contentHandlers;
+        _llmResponseProcessor = llmResponseProcessor;
         _logger = logger;
     }
 
     public async ValueTask<Unit> Handle(DialogMessageCommand command, CancellationToken cancellationToken)
     {
-        string? textMessage = command.AutoAnswer ? command.Text : command.Message.Text;
+        string? textMessage = command.AutoAnswer ? command.Text : command.Message?.Text;
 
-        if (command.Message?.Type == MessageType.Voice)
+        if (command.Message?.Type != null)
         {
-            textMessage = await Transcribe(command);
+            var handler = _contentHandlers.FirstOrDefault(h => h.SupportedType == command.Message.Type);
+            if (handler != null)
+            {
+                textMessage = await handler.ProcessAsync(command, cancellationToken);
+            }
+
+            if (command.Message.Caption != null && textMessage != null)
+            {
+                textMessage = $"#{command.Message.Caption}" + Environment.NewLine + textMessage;
+            }
         }
 
         return await HandleTextMessage(textMessage, command, cancellationToken);
     }
 
-    private async Task<Unit> HandleTextMessage(string textMessage, DialogMessageCommand command, CancellationToken cancellationToken)
+    private async Task<Unit> HandleTextMessage(string? textMessage, DialogMessageCommand command, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(textMessage))
         {
             return Unit.Value;
         }
 
-        // Check for registration
         UserState? userState = _userStateService.GetState(command.UserId);
 
-        //Проверить на специализацию
-        if(textMessage.StartsWith("subspec_"))
+        if (textMessage.StartsWith("subspec_"))
         {
             string subSpecname = textMessage.Replace("subspec_", string.Empty);
             string llmResponse = userState.LastLLMResponse;
         }
 
-        //Send message to LLM
-        var responseTask = userState.ClientName != null ?
-           _dataService.SendClientChatMessage(command.UserId, textMessage, Guid.Parse(userState.ClientName.Id)) :
-           _dataService.SendChatMessage(command.UserId, textMessage);
+        var responseTask = userState.ClientName != null
+           ? _dataService.SendClientChatMessage(command.UserId, textMessage, Guid.Parse(userState.ClientName.Id))
+           : _dataService.SendChatMessage(command.UserId, textMessage);
 
-        while (!responseTask.IsCompleted) {
-            //Show to user a typing animation
+        while (!responseTask.IsCompleted)
+        {
             await _telegramClient.SendChatAction(
                     chatId: command.ChatId,
                     action: ChatAction.Typing,
@@ -87,23 +94,13 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
         var response = await responseTask;
         _userStateService.UpdateLastLlmResponseSession(command.UserId, response.Answer ?? string.Empty);
 
-
         string message = (response.Answer ?? ResourceMain.WaitingForReply);
 
-        List<InlineKeyboardButton> subspecButtons = new();
+        var (cleanMessage, subspecButtons) = _llmResponseProcessor.Process(message);
 
-        MatchCollection matches = Regex.Matches(message, @"<subspec>(.*?)</subspec>");
-        foreach (Match match in matches.Take(3))
-        {
-            string subspec = match.Groups[1].Value;
-            string subspecData = $"subspec_{match.Groups[1].Value}";
-            subspecButtons.Add(InlineKeyboardButton.WithCallbackData(subspec, subspecData));
-        }
-        message = Regex.Replace(message, @"<subspec>.*?</subspec>", string.Empty, RegexOptions.IgnoreCase).EscapeMarkdownSpecialCharacters();
+        _logger.LogInformation(cleanMessage);
 
-        _logger.LogInformation(message);
-
-        IReadOnlyList<string> messageParts = MessageSplitter.Split(message);
+        IReadOnlyList<string> messageParts = _llmResponseProcessor.SplitMessage(cleanMessage);
         bool isLastPart = false;
         for (int i = 0; i < messageParts.Count; i++)
         {
@@ -121,37 +118,5 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
         }
 
         return Unit.Value;
-    }
-
-    private async Task<string?> Transcribe(DialogMessageCommand command)
-    {
-        //Show to user a typing animation
-        await _telegramClient.SendChatAction(
-                chatId: command.ChatId,
-                action: ChatAction.Typing
-            );
-
-        var message = command.Message;
-
-        var voice = message.Voice;
-        string fileId = voice.FileId;
-
-        var telegramFile = await _telegramClient.GetFile(fileId);
-
-        using MemoryStream voiceStream = new MemoryStream((int)telegramFile.FileSize!);
-
-        await _telegramClient.DownloadFile(telegramFile.FilePath, voiceStream);
-        
-        voiceStream.Position = 0;
-        StreamPart part = new StreamPart(voiceStream, "voice.oga", voice.MimeType);
-        var response = await _asrApiClient.TranscribeAudio(part);
-
-        if(response.IsSuccessful)
-        {
-            return response.Content.Text;
-        }
-
-        _logger.LogError(response.Error.Message);
-        return null;
     }
 }

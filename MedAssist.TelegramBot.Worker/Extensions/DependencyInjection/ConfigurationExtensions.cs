@@ -17,5 +17,8 @@ public static class ConfigurationExtensions
 
         services.AddOptions<AsrConfiguration>()
             .BindConfiguration(ConfigurationDefaults.AsrOptionKey);
+
+        services.AddOptions<CommonOcrConfiguration>()
+            .BindConfiguration(ConfigurationDefaults.CommonOcrOptionKey);
     }
 }

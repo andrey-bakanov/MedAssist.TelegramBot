@@ -2,6 +2,24 @@
 
 
 ```
+##test
+	@BotPhather /setdescription - добавить описание бота
+	@BotPhather /editabout - добавить заголовок описания
+
+	docker network create med-assist
+
+	docker build -t medassist.worker.test -f MedAssist.TelegramBot.Worker/Dockerfile .
+	
+	docker stop medassist.worker.test
+	docker rm -f medassist.worker.test 
+	
+	docker run --name medassist.worker.test --network med-assist  -t -d --env-file MedAssist.TelegramBot.Worker/.env medassist.worker.test
+	
+	docker run --name whisper --network med-assist -d -p 9000:9000 -e ASR_MODEL=base -e ASR_ENGINE=openai_whisper onerahmet/openai-whisper-asr-webservice:latest
+```
+
+```
+##prod
 	@BotPhather /setdescription - добавить описание бота
 	@BotPhather /editabout - добавить заголовок описания
 
@@ -12,7 +30,7 @@
 	docker stop medassist.worker.production
 	docker rm -f medassist.worker.production 
 	
-	docker run --name medassist.worker.production --network med-assist  -t -d --env-file MedAssist.TelegramBot.Worker/.env medassist.worker.production
+	docker run --name medassist.worker.production --network med-assist  -t -d --env-file MedAssist.TelegramBot.Worker/prod.env medassist.worker.production
 	
 	docker run --name whisper --network med-assist -d -p 9000:9000 -e ASR_MODEL=base -e ASR_ENGINE=openai_whisper onerahmet/openai-whisper-asr-webservice:latest
 ```

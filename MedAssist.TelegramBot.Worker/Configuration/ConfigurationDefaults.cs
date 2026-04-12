@@ -9,4 +9,6 @@ public sealed class ConfigurationDefaults
     public const string MiniAppOptionKey = "MiniApp";
 
     public const string AsrOptionKey = "AsrService";
+
+    public const string CommonOcrOptionKey = "CommonOcrService";
 }

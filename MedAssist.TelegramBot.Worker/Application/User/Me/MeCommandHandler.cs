@@ -1,5 +1,6 @@
 ﻿using MedAssist.TelegramBot.Worker.Resources;
 using MedAssist.TelegramBot.Worker.Services;
+using MedAssist.TelegramBot.Worker.Services.State;
 using Mediator;
 using System.Text;
 using Telegram.Bot;
@@ -24,7 +25,19 @@ public class MeCommandHandler : ICommandHandler<MeCommand>
     public async ValueTask<Unit> Handle(MeCommand command, CancellationToken cancellationToken)
     {
         var userProfile = await _dataService.GetUserInfoAsync(command.UserId);
-        
+        if(userProfile == null)
+        {
+            //No profile yet
+            var inlineKeyboardRegister = new InlineKeyboardMarkup();
+            inlineKeyboardRegister.AddNewRow([InlineKeyboardButton.WithCallbackData(ResourceMain.Registration, BotCommandNames.RegisterCommandName)]);
+
+            string message = String.Format(ResourceMain.Wellcome, command.Username);
+            await _telegramClient.SendMessage(command.ChatId,
+                message,
+                replyMarkup: inlineKeyboardRegister);
+
+            return Unit.Value;
+        }
         string lastSelectedUsername = string.Empty;
         if (userProfile?.LastSelectedPatientId != null)
         {
