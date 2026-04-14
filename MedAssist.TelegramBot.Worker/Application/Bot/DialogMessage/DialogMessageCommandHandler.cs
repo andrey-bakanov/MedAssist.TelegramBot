@@ -141,7 +141,7 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
                 {
                     //Работаем в рамках переопределенной специализации
                     replyMarkup = new InlineKeyboardMarkup(
-                            new InlineKeyboardButton("Вернуться к своей специализации", "reset_subspec")
+                            new InlineKeyboardButton("Вернуться к своей специализации", "subspec_reset")
                         );
                 }
                 else if (subspecButtons.Count > 0)
