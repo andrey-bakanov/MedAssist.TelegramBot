@@ -75,6 +75,15 @@ public class UserStateService
         return state;
     }
 
+    public UserState OverrideSpeciality(long userId, string? speciality)
+    {
+        UserState? state = GetState(userId);
+
+        state.OverridedSpeciality = speciality;
+
+        return state;
+    }
+
     public async ValueTask<UserState> EnsureState(long userId, long chatId, Func<long,Task<UserState>> stateFactory)
     {
         bool stateFound = States.TryGetValue(userId, out UserState? state);

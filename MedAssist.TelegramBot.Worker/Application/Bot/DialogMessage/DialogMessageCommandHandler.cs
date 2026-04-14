@@ -3,7 +3,6 @@ using MedAssist.TelegramBot.Worker.Application.Bot.DialogMessage.Processing;
 using MedAssist.TelegramBot.Worker.Resources;
 using MedAssist.TelegramBot.Worker.Services;
 using MedAssist.TelegramBot.Worker.Services.State;
-using MedAssist.TelegramBot.Worker.Extensions;
 using Mediator;
 using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
@@ -68,15 +67,44 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
 
         UserState? userState = _userStateService.GetState(command.UserId);
 
+        string? subSpecCode = userState.OverridedSpeciality;
+
+        //button with subspec clicked
         if (textMessage.StartsWith("subspec_"))
         {
-            string subSpecname = textMessage.Replace("subspec_", string.Empty);
-            string llmResponse = userState.LastLLMResponse;
+            subSpecCode = textMessage.Replace("subspec_", string.Empty);
+            var specialities = await _dataService.GetSpecialitiesAsync();
+            var subspec = specialities.FirstOrDefault(x => x.Code == subSpecCode);
+            if (subspec != null)
+            {
+                textMessage = userState.LastLLMResponse;
+
+                _userStateService.OverrideSpeciality(command.UserId, subSpecCode);
+
+                await _telegramClient.SendMessage(
+                    command.ChatId,
+                    $"Уточнение со специализацией {0}",
+                    parseMode: ParseMode.MarkdownV2,
+                    cancellationToken: cancellationToken);
+            }
+            else
+            {
+                _logger.LogWarning($"Requested subspec {subSpecCode}  - reset subspec.");
+
+                subSpecCode = null;
+                _userStateService.OverrideSpeciality(command.UserId, null);
+
+                await _telegramClient.SendMessage(
+                    command.ChatId,
+                    $"Уточнение со специализацией",
+                    parseMode: ParseMode.MarkdownV2,
+                    cancellationToken: cancellationToken);
+            }            
         }
 
         var responseTask = userState.ClientName != null
-           ? _dataService.SendClientChatMessage(command.UserId, textMessage, Guid.Parse(userState.ClientName.Id))
-           : _dataService.SendChatMessage(command.UserId, textMessage);
+           ? _dataService.SendClientChatMessage(command.UserId, textMessage, Guid.Parse(userState.ClientName.Id), subSpecCode)
+           : _dataService.SendChatMessage(command.UserId, textMessage, subSpecCode);
 
         while (!responseTask.IsCompleted)
         {
@@ -96,7 +124,7 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
 
         string message = (response.Answer ?? ResourceMain.WaitingForReply);
 
-        var (cleanMessage, subspecButtons) = _llmResponseProcessor.Process(message);
+        var (cleanMessage, subspecButtons) = await _llmResponseProcessor.ProcessAsync(message);
 
         _logger.LogInformation(cleanMessage);
 
@@ -105,9 +133,24 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
         for (int i = 0; i < messageParts.Count; i++)
         {
             isLastPart = (i == messageParts.Count - 1);
-            InlineKeyboardMarkup? replyMarkup = (isLastPart && subspecButtons.Count > 0)
-                ? new InlineKeyboardMarkup(subspecButtons.Chunk(2).Select(chunk => chunk.ToArray()))
-                : null;
+            InlineKeyboardMarkup? replyMarkup = null;
+
+            if (isLastPart)
+            {
+                if (!string.IsNullOrEmpty(subSpecCode))
+                {
+                    //Работаем в рамках переопределенной специализации
+                    replyMarkup = new InlineKeyboardMarkup(
+                            new InlineKeyboardButton("Вернуться к своей специализации", "reset_subspec")
+                        );
+                }
+                else if (subspecButtons.Count > 0)
+                {
+                    //Рисуем кнопки в обычном режиме
+                    replyMarkup = new InlineKeyboardMarkup(subspecButtons.Chunk(2).Select(chunk => chunk.ToArray()));
+                }
+
+            }
 
             await _telegramClient.SendMessage(
                 command.ChatId,

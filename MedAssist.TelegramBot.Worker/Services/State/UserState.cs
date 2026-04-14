@@ -34,4 +34,9 @@ public class UserState
     /// Контекст пациента
     /// </summary>
     public NamedItem? ClientName { get; set; }
+
+    /// <summary>
+    /// Переопределенная специализация
+    /// </summary>
+    public string? OverridedSpeciality { get; set; }
 }

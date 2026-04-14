@@ -1,13 +1,22 @@
-using System.Text.RegularExpressions;
 using MedAssist.TelegramBot.Worker.Extensions;
 using MedAssist.TelegramBot.Worker.Helpers;
+using MedAssist.TelegramBot.Worker.Services;
+using System.Text.RegularExpressions;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace MedAssist.TelegramBot.Worker.Application.Bot.DialogMessage.Processing;
 
 public class LlmResponseProcessor
 {
-    public (string Message, IReadOnlyList<InlineKeyboardButton> Buttons) Process(string response)
+    private readonly IDataService _dataService;
+
+    public LlmResponseProcessor(IDataService dataService)
+    {
+        _dataService = dataService;
+    }
+
+
+    public async Task<(string Message, IReadOnlyList<InlineKeyboardButton> Buttons)> ProcessAsync(string response)
     {
         if (string.IsNullOrWhiteSpace(response))
         {
@@ -17,11 +26,19 @@ public class LlmResponseProcessor
         List<InlineKeyboardButton> subspecButtons = new();
 
         MatchCollection matches = Regex.Matches(response, @"<subspec>(.*?)</subspec>");
-        foreach (Match match in matches.Take(2))
+        if (matches.Count > 0)
         {
-            string subspec = match.Groups[1].Value;
-            string subspecData = $"subspec_{match.Groups[1].Value}";
-            subspecButtons.Add(InlineKeyboardButton.WithCallbackData(subspec, subspecData));
+            var specialities = await _dataService.GetSpecialitiesAsync();
+                
+            foreach (Match match in matches.Take(2))
+            {
+                var subspec = specialities.FirstOrDefault(x => x.Code == match.Groups[1].Value);
+                if (subspec != null)
+                {
+                    string subspecData = $"subspec_{match.Groups[1].Value}";
+                    subspecButtons.Add(InlineKeyboardButton.WithCallbackData(subspec.Title, subspecData));
+                }
+            }
         }
 
         string cleanedMessage = Regex.Replace(response, @"<subspec>.*?</subspec>", string.Empty, RegexOptions.IgnoreCase).EscapeMarkdownSpecialCharacters();

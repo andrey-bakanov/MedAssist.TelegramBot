@@ -195,12 +195,13 @@ public class DataService : IDataService
         _memoryCache.Remove(cacheKey);
     }
 
-    public async Task<ChatMessageDto> SendChatMessage(long userId, string text)
+    public async Task<ChatMessageDto> SendChatMessage(long userId, string text, string? overridedSpecialityCode)
     {
         ChatMessageRequest request = new ChatMessageRequest()
         {
             Text = text,
             RequestId = Guid.NewGuid(),
+            SpecialtyCodeOverride = overridedSpecialityCode
         };
 
         var response = await _client.SendGeneralMessage(userId, request);
@@ -218,12 +219,13 @@ public class DataService : IDataService
         throw new DialogDenideException(response.Error?.Message ?? string.Empty);
     }
 
-    public async Task<ChatMessageDto> SendClientChatMessage(long userId, string text, Guid clientId)
+    public async Task<ChatMessageDto> SendClientChatMessage(long userId, string text, Guid clientId, string? overridedSpecialityCode)
     {
         ChatMessageRequest request = new ChatMessageRequest()
         {
             Text = text,
             RequestId = Guid.NewGuid(),
+            SpecialtyCodeOverride = overridedSpecialityCode
         };
 
         var response = await _client.SendClientDialogMessage(userId, clientId, request);

@@ -98,8 +98,9 @@ public interface IDataService
     /// </summary>
     /// <param name="userId">Идентификатор пользователя в Telegram.</param>
     /// <param name="text">Сообщение пользователя.</param>
+    /// <param name="overridedSpecialityCode">Переопределенный код специальности</param>
     /// <returns>Задача, представляющая асинхронную операцию.</returns>
-    Task<ChatMessageDto> SendChatMessage(long userId, string text);
+    Task<ChatMessageDto> SendChatMessage(long userId, string text, string? overridedSpecialityCode);
 
     /// <summary>
     /// Асинхронно отправляет сообщение чата.
@@ -107,8 +108,9 @@ public interface IDataService
     /// <param name="userId">Идентификатор пользователя в Telegram.</param>
     /// <param name="text">Сообщение пользователя.</param>
     /// <param name="clientId">Идентификатор запроса</param>
+    /// <param name="overridedSpecialityCode">Переопределенный код специальности</param>
     /// <returns>Задача, представляющая асинхронную операцию.</returns>
-    Task<ChatMessageDto> SendClientChatMessage(long userId, string text, Guid clientId);
+    Task<ChatMessageDto> SendClientChatMessage(long userId, string text, Guid clientId, string? overridedSpecialityCode);
 
     /// <summary>
     /// Начинает новый диалог с пользователем
