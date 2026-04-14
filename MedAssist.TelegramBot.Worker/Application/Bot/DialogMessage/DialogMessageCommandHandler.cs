@@ -83,7 +83,7 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
 
                 await _telegramClient.SendMessage(
                     command.ChatId,
-                    $"Уточнение со специализацией {0}",
+                    $"Уточнение со специализацией {subspec.Title}",
                     parseMode: ParseMode.MarkdownV2,
                     cancellationToken: cancellationToken);
             }
@@ -96,7 +96,7 @@ public class DialogMessageCommandHandler : ICommandHandler<DialogMessageCommand>
 
                 await _telegramClient.SendMessage(
                     command.ChatId,
-                    $"Уточнение со специализацией",
+                    $"Возвращена основная специализация",
                     parseMode: ParseMode.MarkdownV2,
                     cancellationToken: cancellationToken);
             }            
